@@ -9,6 +9,7 @@ object Deps {
 
   def almondScalaApi = "sh.almond" % "scala-kernel-api" % "0.6.0" cross CrossVersion.full
   def argonautShapeless = setting("com.github.alexarchambault" %%% "argonaut-shapeless_6.2" % "1.2.0-M11")
+  def enumeratum = "com.beachape" %% "enumeratum" % "1.5.13"
   def jodaTime = "joda-time" % "joda-time" % "2.10.3"
   def rhino = "org.mozilla" % "rhino" % "1.7.11"
   def shapeless = setting("com.chuusai" %%% "shapeless" % "2.3.3")
@@ -17,5 +18,8 @@ object Deps {
   def scalatags = setting("com.lihaoyi" %%% "scalatags" % "0.6.8")
   def scalaTest = "org.scalatest" %% "scalatest" % "3.0.8"
   def utest = setting("com.lihaoyi" %%% "utest" % "0.6.6")
+
+  def pprint = "com.lihaoyi" %% "pprint" % "0.5.3"
+  def osLib = "com.lihaoyi" %% "os-lib" % "0.2.5"
 
 }

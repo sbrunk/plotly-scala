@@ -22,7 +22,11 @@ inThisBuild(List(
 lazy val core = crossProject(JVMPlatform, JSPlatform)
   .settings(
     shared,
-    plotlyPrefix
+    plotlyPrefix,
+    libraryDependencies += Deps.enumeratum,
+    sourceGenerators in Compile += Def.task {
+      Main.plotlySchemaToScala((sourceManaged in Compile).value)
+    }.taskValue
   )
 
 lazy val coreJvm = core.jvm
