@@ -1,7 +1,13 @@
+package codegen
 import io.circe.Json
 
-case class Traces(
-  traces: Map[String, Trace]
+case class PlotlySchema(
+  //defs: Json,
+  traces: Map[String, Trace],
+  layout: Layout
+  //transforms: Json,
+  //frames: Json,
+  //animation: Json
 )
 
 case class Trace(
@@ -33,7 +39,7 @@ object Attribute {
     dflt: Option[Json] = None, // TODO decode properly
     role: Option[String] = None,
     editType: Option[String] = None,
-    description: Option[String] = None,
+    description: Option[String] = None
   ) extends Attribute
 
   case class BooleanT(
@@ -71,7 +77,7 @@ object Attribute {
     role: Option[String] = None,
     arrayOk: Option[Boolean] = None,
     editType: Option[String] = None,
-    description: Option[String] = None,
+    description: Option[String] = None
   ) extends Attribute
 
   case class ColorListT(
@@ -115,5 +121,8 @@ object Attribute {
     nestedItems: Boolean = false
   ) extends Attribute
 
-
 }
+
+case class Layout(
+  layoutAttributes: Map[String, Attribute]
+)

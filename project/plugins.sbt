@@ -21,7 +21,7 @@ lazy val codegen = (project in file ("codegen"))
     ).map(_ % circeVersion),
     libraryDependencies ++= Seq(
       "com.lihaoyi" %% "os-lib" % "0.2.8",
-      "org.scalameta" %% "scalameta" % "4.1.4",
+      "org.scalameta" %% "scalameta" % "4.2.2",
       "org.scalameta" %% "scalafmt-core" % "2.0.0-RC5",
     )
   )

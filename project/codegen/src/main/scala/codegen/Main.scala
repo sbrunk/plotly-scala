@@ -1,4 +1,4 @@
-
+package codegen
 import scala.io.Source
 import scala.util.Try
 import Attribute._
@@ -17,10 +17,6 @@ import scala.util.Try
 
 object Main {
 
-  def transform(traces: Traces): Seq[Tree] = {
-    traces.traces.map { case (name, trace) => transform(name, trace) }
-  }.toSeq
-
   def transform(name: String, trace: Trace): Tree = {
     val params = trace.attributes.map {
       case (paramName, tpe) =>
@@ -36,7 +32,7 @@ object Main {
       .toList
       .flatten
     q"""
-       package foo {
+       package traces {
        import enumeratum._
         $cls
         object ${Term.Name(name.capitalize)} {
@@ -79,7 +75,7 @@ object Main {
     val enumValues = enum.values
       //.map("_" + _)
       .map(x => if(x == "") "empty" else x)
-      .map(x => if(Try(Integer.parseInt(x)).isSuccess) s"_$x" else x)
+      //.map(x => if(Try(Integer.parseInt(x)).isSuccess) s"_$x" else x)
       .map(enumValue).toList
     Seq(q"""
       sealed trait $enumType extends EnumEntry""",
@@ -122,17 +118,20 @@ object Main {
     x
   }
 
+  def main(args: Array[String]): Unit = plotlySchemaToScala(new java.io.File(args.head))
+
   def plotlySchemaToScala(base: java.io.File): Seq[java.io.File] = {
 
     val plotlySchemaJson = Source.fromFile("plotschema.json").mkString
 
-    val decodedSchema: Either[Error, Traces] = for {
+    val decodedSchema: Either[Error, PlotlySchema] = for {
       json   <- parse(plotlySchemaJson)
-      traces <- json.hcursor.downField("schema").as[Traces]
-    } yield traces
+      //traces <- json.hcursor.downField("schema").as[Traces]
+      schema <- json.hcursor.downField("schema").as[PlotlySchema]
+    } yield schema
 
-    val sources = decodedSchema.map { traces =>
-      traces.traces.map {
+    val sources = decodedSchema.map { schema =>
+      schema.traces.map {
         case (name, tree) =>
           (name, Scalafmt.format(transform(name, tree).toString()).get)
       }

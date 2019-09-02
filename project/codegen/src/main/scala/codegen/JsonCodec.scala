@@ -1,3 +1,5 @@
+package codegen
+
 import Attribute._
 import io.circe.Decoder.Result
 import io.circe._
@@ -18,6 +20,10 @@ import io.circe.optics.JsonPath._
 import cats.syntax.functor._
 import io.circe.generic.extras.AutoDerivation
 
+import cats.data.StateT
+import cats.instances.either._
+import io.circe.{ ACursor, Decoder, Json }
+
 object JsonCodec extends AutoDerivation {
   // KebabCase but with _ instead of -
   val caseTransformation: String => String = _.replaceAll(
@@ -35,6 +41,14 @@ object JsonCodec extends AutoDerivation {
       .withDefaults
       .withDiscriminator("valType")
       .copy(transformConstructorNames = removeT andThen caseTransformation)
+
+  implicit val decodeLayout: Decoder[Layout] =
+    Decoder.fromState(
+      for {
+        _ <- Decoder.state.decodeField[String]("editType") // ignore
+        attributes <- StateT.inspectF((_: ACursor).as[Map[String, Attribute]])
+      } yield Layout(attributes)
+    ).prepare(_.downField("layoutAttributes"))
 
   implicit val traceDecoder: Decoder[Trace] = new Decoder[Trace] {
     override def apply(c: HCursor): Result[Trace] = {
@@ -59,6 +73,7 @@ object JsonCodec extends AutoDerivation {
 
     // if valType is set, try to decode the corresponding type
     override def apply(c: HCursor): Result[Attribute] = {
+
       def tryValType = c.get[String]("valType")
         .map { valType => {
           val d: Decoder[Attribute] = valType match {
