@@ -25,7 +25,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
     plotlyPrefix,
     libraryDependencies += Deps.enumeratum,
     sourceGenerators in Compile += Def.task {
-      Main.plotlySchemaToScala((sourceManaged in Compile).value)
+      codegen.Main.plotlySchemaToScala((sourceManaged in Compile).value)
     }.taskValue
   )
 

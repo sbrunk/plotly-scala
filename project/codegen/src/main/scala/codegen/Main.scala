@@ -31,13 +31,29 @@ object Main {
       }
       .toList
       .flatten
+    val layoutParams = trace.layoutAttributes.map {
+      case (paramName, tpe) =>
+        param"${Term.Name(paramName)}: ${attributeType(Some("Layout"), paramName, tpe)}"
+    }.toList
+    val layoutCls = q"case class Layout(..$layoutParams) extends plotly.layout.Layout"
+    val layout = trace.layoutAttributes
+      .collect {
+        case(name, tpe: ObjectT) => transform(name, tpe)
+        case(name, tpe: EnumeratedT) => transform(name, tpe)
+      }
+      .toList
+      .flatten
     q"""
        package traces {
        import enumeratum._
-        $cls
-        object ${Term.Name(name.capitalize)} {
-        ..$companion
-       }
+         $cls
+         object ${Term.Name(name.capitalize)} {
+           ..$companion
+         }
+         object Layout {
+           $layoutCls
+           ..$layout
+         }
       }
       """
   }
@@ -73,9 +89,7 @@ object Main {
     val t = init"${enumType}()"
     def enumValue(name: String) = q"""case object ${Term.Name(name.capitalize)} extends $enumType()"""
     val enumValues = enum.values
-      //.map("_" + _)
       .map(x => if(x == "") "empty" else x)
-      //.map(x => if(Try(Integer.parseInt(x)).isSuccess) s"_$x" else x)
       .map(enumValue).toList
     Seq(q"""
       sealed trait $enumType extends EnumEntry""",
@@ -89,7 +103,7 @@ object Main {
   def attributeType(
       parent: Option[String],
       name: String,
-      attribute: Attribute): scala.meta.Type = {
+      attribute: Attribute): Type = {
     val x = attribute match {
       case a: DataArrayT => t"plotly.Sequence"
       case a: EnumeratedT =>
@@ -118,6 +132,31 @@ object Main {
     x
   }
 
+  def transform(layout: Layout): Tree = {
+    val params = layout.layoutAttributes.map {
+      case (paramName, tpe) =>
+        param"${Term.Name(paramName)}: ${attributeType(Some("Layout"), paramName, tpe)}"
+    }.toList
+    val cls = q"abstract class Layout(..$params)"
+    // for each nested type like ObjectT/EnumeratedT, we also have to create the corresponding definitions
+    val companion = layout.layoutAttributes
+      .collect {
+        case(name, tpe: ObjectT) => transform(name, tpe)
+        case(name, tpe: EnumeratedT) => transform(name, tpe)
+      }
+      .toList
+      .flatten
+    q"""
+       package layout {
+       import enumeratum._
+         $cls
+         object Layout {
+           ..$companion
+         }
+      }
+      """
+  }
+
   def main(args: Array[String]): Unit = plotlySchemaToScala(new java.io.File(args.head))
 
   def plotlySchemaToScala(base: java.io.File): Seq[java.io.File] = {
@@ -126,15 +165,14 @@ object Main {
 
     val decodedSchema: Either[Error, PlotlySchema] = for {
       json   <- parse(plotlySchemaJson)
-      //traces <- json.hcursor.downField("schema").as[Traces]
       schema <- json.hcursor.downField("schema").as[PlotlySchema]
     } yield schema
 
     val sources = decodedSchema.map { schema =>
       schema.traces.map {
-        case (name, tree) =>
-          (name, Scalafmt.format(transform(name, tree).toString()).get)
-      }
+        case (name, trace) =>
+          (name, Scalafmt.format(transform(name, trace).toString()).get)
+      } + ("Layout" -> Scalafmt.format(transform(schema.layout).toString()).get)
     }.toTry.get
 
     sources.map {

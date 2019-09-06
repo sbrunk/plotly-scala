@@ -17,11 +17,11 @@ lazy val codegen = (project in file ("codegen"))
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic-extras",
       "io.circe" %% "circe-parser",
-      "io.circe" %% "circe-optics",
+      "io.circe" %% "circe-optics"
     ).map(_ % circeVersion),
     libraryDependencies ++= Seq(
       "com.lihaoyi" %% "os-lib" % "0.2.8",
       "org.scalameta" %% "scalameta" % "4.2.2",
-      "org.scalameta" %% "scalafmt-core" % "2.0.0-RC5",
+      "org.scalameta" %% "scalafmt-core" % "2.0.0-RC5"
     )
   )
